@@ -1,5 +1,4 @@
 rm(list = ls())
-
 ######################################## LIBRARIES ###########################################
 
 library(mvtnorm) 
@@ -12,7 +11,13 @@ library(robustbase)
 library(foreach)
 library(doParallel)
 
+# Altere dir para o diretorio em que foi salvo 
 ######################################## FUNCTIONS ###########################################
+# o codigo C++ de nome fast.cpp.
+directory <- "/home/pedro/Downloads/hyperparameters/"
+setwd(dir = directory)
+source(file = paste(directory,"config_cpp.R", sep = ""))
+config_cpp() #Compilando o codigo C++.
 
 #COMBINA??O DE HIPERPARAMETROS
 comb = function(x){
@@ -33,15 +38,20 @@ S1 = function(y1, y2, frac = 0.5){
   tmp = (y1[idx1] - y2[idx2])^2
   mean(quantile(tmp[tmp != 0], probs = c(.9, .1)))
 }
-S2 = function(y1, y2){
-  D = outer(y1, y2, '-')
-  D = D^2
-  D_no_zero = D[which(!D == 0)]
-  median(D_no_zero)
-}
+
+# S2 = function(y1, y2){
+#     D = outer(y1, y2, '-')
+#     D = D^2
+#     D_no_zero = D[which(!D == 0)]
+#     median(D_no_zero)
+#  }
+# 
+# #S2 <- S2_cpp
+
 S3 = function(y1, y2, n, p){
   sum((y1-y2)^2)/(n-p-1)
 }
+
 S4 = function(y1,y2){
   h.select(y1,y2,method="aicc")
 }
@@ -66,7 +76,6 @@ gauss.kern = function(a, b, s){
 }
 
 ETKRR = function(y, x, s, tol = 1e-10, maxit = 100, tolsolve = 1e-100) {
-  
   invg = 0
   x = as.matrix(x)
   n = nrow(x)
@@ -113,7 +122,7 @@ ETKRR = function(y, x, s, tol = 1e-10, maxit = 100, tolsolve = 1e-100) {
 
 #ETKRR PRODUTO
 ETKRRP =  function(y1, x1, y2, x2, s, t = NULL, tol = 1e-10, maxit = 100, tolsolve = 1e-100) {
-  
+
   #1: CENTRO/MAX
   #2: AMPLITUDE/MIN
   #TOLSOLVE ? A TOLERANCIA DE CADA ELEMENTO DA MATRIZ, FOI COLOCADO ESSA TOLERANCIA POIS FOI OBSERVADO NUMEROS MUITO PEQUENOS COMO 1e-50
@@ -194,23 +203,9 @@ ETKRRP =  function(y1, x1, y2, x2, s, t = NULL, tol = 1e-10, maxit = 100, tolsol
   (result = list(coefficients = cbind(betahat1, betahat2), fitted.values = cbind(yhat1, yhat2), criterion = S, weigth = K, iter = it, nginv = invg, hp = c(hp1,hp2)))
 }
 
-#ELIPTICAL REG
-#caminho = "C:\\Users\\Ullysses\\Documents\\ESTATISTICA\\PIBIC\\ARTIGOS\\iETKRR - PRODUTO\\ellipticalReg.R"
-#reg.elliptical = source(file=caminho)
-
-############################ INITIALIZATION STEP ##########################################
-
-#setwd('C:/Users/Ullysses/Documents/ESTATISTICA/PIBIC/ARTIGOS/iETKRR - PRODUTO/SIMULA??ES') 
-
-# amostra = 50
-# percentual = 0.05
-# scenario = 1
-
-
 func_metodos = function(amostra, percentual, scenario) {
     
-    caminho = "/home/pedro/Downloads/ellipticalReg.R"
-    reg.elliptical = source(file=caminho)
+    reg.elliptical = source(file = paste(directory,"ellipticalReg.R", sep = ""))
     
     tol = 1e-10 #TOLERANCIA DO MODELO
     maxit = 100 #MAXIMO DE ITERA??O DO MODELO
@@ -519,11 +514,19 @@ func_metodos = function(amostra, percentual, scenario) {
         rownames(data.sum) = chp_names
         
         return(list("data" = data.sum))}
+
+
+
         ###################################### FIM DA FUN??O #################################################
- 
-func_metodos(50,0.05,1) 
+
+func_metodos(1000,0.05,1)
+packpages = c('mvtnorm', 'sm', 'MASS', 'iRegression', 'quantreg', 'robustbase') 
+
+profvis::profvis(func_metodos(1000,0.05,1)) 
    
-packpages = c('mvtnorm', 'sm', 'MASS', 'iRegression', 'quantreg', 'robustbase')        
+
+
+    
           
 ################################## PEQUENA COMPARA??O ENTRE FOR NORMAL E FOR PARALELO ################################
 
@@ -534,29 +537,32 @@ packpages = c('mvtnorm', 'sm', 'MASS', 'iRegression', 'quantreg', 'robustbase')
 #1 - Cenario 
         
 #Normal
+set.seed(0)
 TempoA = system.time({for (i in 1:7) {func_metodos(1000,0.05,1)}})[3]
+#S2 <- S2_cpp
+TempoB = system.time({for (i in 1:7) {func_metodos(1000,0.05,1)}})[3]
         
 #Paralelo
 
 #Checa quantos n?cleos existem
 #ncl<-getDoParWorkers()
 #Checa quantos n?cleos existem
-ncl = detectCores() - 1
-
-#Registra os n?cleos a serem utilizados
-cl <- makeCluster(ncl, type = 'PSOCK')
-registerDoParallel(cl)
-
-#checa quantos nucleos est?o sendo usados
-getDoParWorkers()
-
-TempoB = system.time({foreach(i = 1:7, .packages=packpages) %dopar% {func_metodos(1000,0.05,1)}})[3]
-
-stopCluster(cl)  
-
-comp_func_metodos <- cmpfun(func_metodos)
-
-TempoC = system.time({foreach(i = 1:100, .packages=packpages) %dopar% {comp_func_metodos(200,0.05,1)}})[3]
+# ncl = detectCores() - 1
+# 
+# #Registra os n?cleos a serem utilizados
+# cl <- makeCluster(ncl, type = 'PSOCK')
+# registerDoParallel(cl)
+# 
+# #checa quantos nucleos est?o sendo usados
+# getDoParWorkers()
+# 
+# TempoB = system.time({foreach(i = 1:7, .packages=packpages) %dopar% {func_metodos(1000,0.05,1)}})[3]
+# 
+# stopCluster(cl)  
+# 
+# comp_func_metodos <- cmpfun(func_metodos)
+# 
+# TempoC = system.time({foreach(i = 1:100, .packages=packpages) %dopar% {comp_func_metodos(200,0.05,1)}})[3]
 
 
 #    TempoA   TempoB(4)  TempoC(3) 200 50
@@ -564,88 +570,3 @@ TempoC = system.time({foreach(i = 1:100, .packages=packpages) %dopar% {comp_func
 
 #    TempoA   TempoB(4)  TempoC(3) TempoD(2) 200 100
 #    261.13    101.42     106.70    127.09
-
-
-
-
-
-
-
-#UTILIZANDO O FOR NORMAL EM 50 REPLICAS OBTIVE O TEMPO DE elapsed 96.47, USANDO O FOREACH COM 4 NUCLEOS (CAPACIDADE DA MINHA MAQUINA) 
-#OBTIVE elapsed 58.13
-
-
-
-############################ UTILIZANDO FOREACH E DOPARELL #############
-
-#http://pablobarbera.com/POIR613/code/06-parallel-computing.html
-#http://www.vesnam.com/Rblog/existing-code-parallelization-yes-or-no/
-#https://rpubs.com/nishantsbi/223444
-#https://medium.com/@ambodi/performance-benchmarks-of-serial-and-parallel-loops-in-r-5a59e29051f9
-#https://blog.affini-tech.com/r-package-doparallel/
-#http://www.trutschnig.net/r_parallel.html o
-#http://michaeljkoontz.weebly.com/uploads/1/9/9/4/19940979/parallel.pdf
-
-
-amostra = c(50, 200, 1000)
-percentual = c(0.05, 0.10, 0.15, 0.20, 0.30)
-scenario = c(1, 2, 3, 4, 5, 6, 7, 8, 9)
-
-R = 500 #N?MERO DE REPLICAS
-
-
-set.seed(12345)
-
-#Checa quantos n?cleos existem
-ncl = detectCores() - 1 #Aconselhamos a usar no m?ximo n-1 cora??es da m?quina.
-
-#Registra os n?cleos a serem utilizados (cria o conjunto de c?pias de R)
-cl <- makeCluster(ncl, type = 'PSOCK')
-
-# "PSOCK": cria novas R Sessions (ent?o nada ? herdado do master).
-# "FORK": Usando o SO Forking, copia a sess?o R atual localmente (ent?o tudo ? herdado do master at? aquele ponto, incluindo pacotes). N?o dispon?vel no Windows.
-
-registerDoParallel(cl) #salva o backend paralelo para a paraleliza??o do processo.
-
-
-for (c in 1:length(scenario)) {
-  for (a in 1:length(amostra)) {
-    
-    
-    for (p in 1:length(percentual)) {
-      
-      data.sum = matrix(0,51,18)
-      simulacoes = foreach(k= 1:R, .packages=packpages) %dopar% { func_metodos(amostra[a],percentual[p],scenario[c])}
-      for (i in 1:R) { data.sum = data.sum + simulacoes[[i]]$data }
-      
-      print(paste("Saved Monte Carlo parameters:","Scenario = ", scenario[c], "n = ", amostra[a], "perc.out = ", percentual[p],"(",round( amostra[a] * percentual[p]), ") Rep = ", R))
-      
-      resultado = cbind(round(data.sum[,1:16]/R,4), data.sum[,c(17,18)]) #M?DIA DAS ESTIMATIVAS
-      
-      sink('simulbackup.txt',append=TRUE)
-      cat("=========================================================================================================================================================================\n")
-      cat("Monte Carlo parameters:", "Scenario = ", scenario[c], "n = ", amostra[a], "perc.out = ", percentual[p],"(", round( amostra[a] * percentual[p]), ") Rep = ", R, "\n")
-      cat("=========================================================================================================================================================================\n")
-      print(resultado)
-      cat("=========================================================================================================================================================================\n")
-      sink()
-    }
-  }
-}
-
-stopCluster(cl)
-
-
-
-
-      
-
-
-
-
-
-
-
-
-
-
