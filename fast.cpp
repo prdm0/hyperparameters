@@ -1,8 +1,7 @@
-#include <Rcpp.h>
+#include <RcppArmadillo.h>
 #include <math.h>
-#include <omp.h>
 
-// [[Rcpp::plugins(openmp)]]
+// [[Rcpp::depends(RcppArmadillo)]]
 
 using namespace Rcpp;
 
@@ -17,7 +16,7 @@ using namespace Rcpp;
 //
 
 // [[Rcpp::export]]
-double S2(NumericVector y1, NumericVector y2) {
+double S2_cpp(NumericVector y1, NumericVector y2) {
   
   if (y1.size() != y2.size()) stop("==> y1 and y2 must have the same length.");
   
@@ -41,6 +40,34 @@ double S2(NumericVector y1, NumericVector y2) {
   //return median(y1);
 }
 
+// [[Rcpp::export]]
+double det_cpp(arma::mat& x){
+   double result = arma::det(x);
+   return result;
+}
+
+// [[Rcpp::export]]
+NumericVector diag_cpp(arma::mat& x){
+   arma::vec result = arma::diagvec(x);
+   return NumericVector(result.begin(),result.end());
+}
+
+// [[Rcpp::export]]
+arma::mat solve_cpp(arma::mat& x){
+   double determinant = arma::det(x);
+   
+   arma::mat result;
+   
+   if (determinant != 0){
+      result = arma::inv(x);
+   }else{
+      /* Moore-Penrose pseudo-inverse of matrix x */
+      result = arma::pinv(x);
+   }
+   
+   return result;
+}
+
 /*** R
 S2R = function(y1, y2){
    D = outer(y1, y2, '-')
@@ -49,13 +76,13 @@ S2R = function(y1, y2){
    median(D_no_zero)
 }
 
-# y1 <- y2 <- 1:3000
-# 
-#microbenchmark::microbenchmark(S2(y1,y2))
-#microbenchmark::microbenchmark(S2R(y1,y2))
+ y1 <- y2 <- 1:1e4
 
-#S2(y1,y2)
-#S2R(y1,y2)
+#microbenchmark::microbenchmark(S2_cpp(y1,y2), times = 5L)
+#microbenchmark::microbenchmark(S2R(y1,y2), times = 5L)
+
+S2_cpp(y1,y2) # Aqui é C++.
+S2R(y1,y2) # Aqui é R.
 
 */
 
