@@ -68,21 +68,19 @@ arma::mat solve_cpp(arma::mat& x){
    return result;
 }
 
-/*** R
-S2R = function(y1, y2){
-   D = outer(y1, y2, '-')
-   D = D^2
-   D_no_zero = D[which(!D == 0)]
-   median(D_no_zero)
-}
-
- y1 <- y2 <- 1:1e4
-
-#microbenchmark::microbenchmark(S2_cpp(y1,y2), times = 5L)
-#microbenchmark::microbenchmark(S2R(y1,y2), times = 5L)
-
-S2_cpp(y1,y2) # Aqui é C++.
-S2R(y1,y2) # Aqui é R.
-
-*/
+// /*** R
+// S2R = function(y1, y2){
+//    D = outer(y1, y2, '-')
+//    D = D^2
+//    D_no_zero = D[which(!D == 0)]
+//    median(D_no_zero)
+// }
+// 
+//  y1 <- y2 <- 1:1e4
+// 
+// #microbenchmark::microbenchmark(S2_cpp(y1,y2), times = 5L)
+// #microbenchmark::microbenchmark(S2R(y1,y2), times = 5L)
+// 
+// S2_cpp(y1,y2) # Aqui é C++.
+// S2R(y1,y2) # Aqui é R.
 

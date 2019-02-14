@@ -8,11 +8,21 @@ library(MASS)
 library(iRegression)
 library(quantreg)
 library(robustbase)
-
-library(foreach)
+#library(foreach)
+#library(doSNOW)
+#library(parallel)
+#library(doMC)
 library(doParallel)
+#library(snow)
 
 ######################################## FUNCTIONS ###########################################
+
+# o codigo C++ de nome fast.cpp.
+directory <- "/home/pedro/Downloads/hyperparameters/"
+setwd(dir = directory)
+source(file = paste(directory, "config_cpp.R", sep = ""))
+config_cpp() #Compilando o codigo C++.
+
 
 #COMBINA??O DE HIPERPARAMETROS
 comb = function(x){
@@ -194,6 +204,7 @@ ETKRRP =  function(y1, x1, y2, x2, s, t = NULL, tol = 1e-10, maxit = 100, tolsol
   (result = list(coefficients = cbind(betahat1, betahat2), fitted.values = cbind(yhat1, yhat2), criterion = S, weigth = K, iter = it, nginv = invg, hp = c(hp1,hp2)))
 }
 
+
 # #ELIPTICAL REG
 # caminho = "C:\\Users\\Ullysses\\Documents\\ESTATISTICA\\PIBIC\\ARTIGOS\\iETKRR - PRODUTO\\ellipticalReg.R"
 # reg.elliptical = source(file=caminho)
@@ -201,7 +212,7 @@ ETKRRP =  function(y1, x1, y2, x2, s, t = NULL, tol = 1e-10, maxit = 100, tolsol
 ############################ INITIALIZATION STEP ##########################################
 
 #setwd('C:/Users/Ullysses/Documents/ESTATISTICA/PIBIC/ARTIGOS/iETKRR - PRODUTO/SIMULA??ES') 
-setwd('/Users/DE-UFPB-Eufrasio/Desktop/iETKRR_Product_RealData/paralelo') 
+#setwd('/Users/DE-UFPB-Eufrasio/Desktop/iETKRR_Product_RealData/paralelo') 
 
 # amostra = 50
 # percentual = 0.05
@@ -209,8 +220,7 @@ setwd('/Users/DE-UFPB-Eufrasio/Desktop/iETKRR_Product_RealData/paralelo')
 
 func_metodos = function(amostra, percentual, scenario) {
     
-    caminho = '/Users/DE-UFPB-Eufrasio/Desktop/iETKRR_Product_RealData/ellipticalReg.R'
-    reg.elliptical = source(file=caminho)
+   reg.elliptical = source(file = paste(directory,"ellipticalReg.R", sep = ""))
     
     tol = 1e-10 #TOLERANCIA DO MODELO
     maxit = 100 #MAXIMO DE ITERA??O DO MODELO
@@ -524,128 +534,24 @@ func_metodos = function(amostra, percentual, scenario) {
         
         return(data.sum)
         }
-        ###################################### FIM DA FUN??O #################################################
- 
-#system.time(func_metodos(1000,0.05,1))[3]
-   
+
 packpages = c('mvtnorm', 'sm', 'MASS', 'iRegression', 'quantreg', 'robustbase')        
           
-################################## PEQUENA COMPARA??O ENTRE FOR NORMAL E FOR PARALELO ################################
-
-       
-        
-#50 - Tamanho da amostra
-#0.05 - Percentual de Outliers
-#1 - Cenario 
-        
-#Normal
-TempoA = system.time({for (i in 1:50) {func_metodos(1000,0.30,2)}})[3]
-        
-#Paralelo
-
-#Checa quantos n?cleos existem
-#ncl<-getDoParWorkers()
-#Checa quantos n?cleos existem
-ncl = detectCores()
-
-#Registra os n?cleos a serem utilizados
-cl <- makeCluster(ncl, type = 'PSOCK')
-registerDoParallel(cl)
-
-#checa quantos nucleos est?o sendo usados
-getDoParWorkers()
-
-TempoB = system.time({foreach(i = 1:50, .packages=packpages) %dopar% {func_metodos(1000,0.30,2)}})[3]
-
-stopCluster(cl)  
-
-
-# Realiza??o de 8 replicas com tamanho de amostra 1000 (com S2)
-# TEMPO A = 328.8 (for normal)
-# Tempo esperado usando processamento paralelo seria de 328.8/4 (quantidade de n?cleos da minha maquina) = 82.2
-# (Mas isso nunca ocorre devido ao que pedro explicou que os n?cleos sempre v?o estar dividindo o processamento com alguma aplica??o do sistema operacional)
-# TEMPO B = 157.8 (processamento paralelo)
-# 
-# Realiza??o de 8 replicas com tamanho de amostra 1000 (sem S2)  
-# TEMPO A = 205.46 (for normal)
-# Tempo esperado usando processamento paralelo 205.4/4 = 51.35
-# TEMPO B = 104.14 (processamento paralelo)
-# 
-# Realiza??o de 50 replicas com tamanho de amostra 1000 (com S2)    
-# TEMPO A = 1928.58 (for normal)
-# Tempo esperado usando processamento paralelo 1928.58/4 = 482.145
-# TEMPO B = 867.81 (processamento paralelo)
-# 
-# Realiza??o de 50 replicas com tamanho de amostra 1000 (sem S2)    
-# TEMPO A = 1044.27 (for normal)
-# Tempo esperado usando processamento paralelo 1044.27 /4 = 261.0675
-# TEMPO B = 579.06 (processamento paralelo)
-
-
-
-
-
-############################ UTILIZANDO FOREACH E DOPARELL #############
-
-#http://pablobarbera.com/POIR613/code/06-parallel-computing.html
-#http://www.vesnam.com/Rblog/existing-code-parallelization-yes-or-no/
-#https://rpubs.com/nishantsbi/223444
-#https://medium.com/@ambodi/performance-benchmarks-of-serial-and-parallel-loops-in-r-5a59e29051f9
-#https://blog.affini-tech.com/r-package-doparallel/
-#http://www.trutschnig.net/r_parallel.html o
-#http://michaeljkoontz.weebly.com/uploads/1/9/9/4/19940979/parallel.pdf
-
-
-amostra = c(1000)
-percentual = c(0.05, 0.10, 0.15, 0.20, 0.30)
-scenario = c(1, 2, 3, 4, 5, 6, 7, 8, 9)
-
-R = 10 #N?MERO DE REPLICAS
-
-
+# Serial:
 set.seed(12345)
+TempoA = system.time({for (i in 1:8) {func_metodos(1000,0.05,1)}})[3]
 
-#Checa quantos n?cleos existem
-ncl = detectCores() - 1 #Aconselhamos a usar no m?ximo n-1 cora??es da m?quina.
+# Forma 2 (Paralelo): 
 
-#Registra os n?cleos a serem utilizados (cria o conjunto de c?pias de R)
-cl <- makeCluster(ncl, type = 'PSOCK')
+set.seed(12345) 
+cores <- detectCores(logical = FALSE)
+cl <- makeCluster(cores, type="FORK")
 
-# "PSOCK": cria novas R Sessions (ent?o nada ? herdado do master).
-# "FORK": Usando o SO Forking, copia a sess?o R atual localmente (ent?o tudo ? herdado do master at? aquele ponto, incluindo pacotes). N?o dispon?vel no Windows.
-
-registerDoParallel(cl) #salva o backend paralelo para a paraleliza??o do processo.
-
-for (c in 1:length(scenario)) {
-  for (a in 1:length(amostra)) {
-    
-    
-    for (p in 1:length(percentual)) {
-      T0 = proc.time()[3]
-      simulacoes = foreach(k= 1:R, .packages=packpages) %dopar% { func_metodos(amostra[a],percentual[p],scenario[c])}
-      tempo = round(proc.time()[3] - T0,2)
-      
-      data.sum = Reduce('+', simulacoes)
-      
-      datahora = as.character(Sys.time())  
-      
-      print(paste("Saved Monte Carlo parameters:","Scenario = ", scenario[c], "n = ", amostra[a], "perc.out = ", percentual[p],"(",round( amostra[a] * percentual[p]), ") Rep = ", R,tempo,datahora ))
-      
-      resultado = cbind(round(data.sum[,1:16]/R,4), data.sum[,c(17,18)]) #M?DIA DAS ESTIMATIVAS
-      
-      sink('teste_paralelo.txt',append=TRUE)
-      cat("=========================================================================================================================================================================\n")
-      cat("Monte Carlo parameters:", "Scenario = ", scenario[c], "n = ", amostra[a], "perc.out = ", percentual[p],"(", round( amostra[a] * percentual[p]), ") Rep = ", R,tempo,as.character(Sys.time()),"\n")
-      cat("=========================================================================================================================================================================\n")
-      print(resultado)
-      cat("=========================================================================================================================================================================\n")
-      sink()
-    }
-  }
-}
+TempoB = system.time({foreach(i = 1:8, .packages=packpages) %dopar% {func_metodos(1000,0.05,1)}})[3]
 
 stopCluster(cl)
 
+# Forma 2 (Paralelo): 
 
-
-
+set.seed(12345)
+system.time(x <- parallel::mclapply(1:8, FUN = function(x) func_metodos(1000,0.05,1), mc.cores = 8))

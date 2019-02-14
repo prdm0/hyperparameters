@@ -9,7 +9,7 @@ config_cpp <- function(dir = NULL){
    }
    
    depend <- function(...){
-      return("Rcpp" %in% utils::installed.packages(...)[ , "Package"])
+      return("RcppArmadillo" %in% utils::installed.packages(...)[ , "Package"])
    }
    
    if(depend()){
@@ -23,7 +23,7 @@ config_cpp <- function(dir = NULL){
       } 
       
       pkg <- NULL
-      pkg <- install("Rcpp") 
+      pkg <- install("RcppArmadillo") 
       
       if(!(is.null(pkg))) stop(" ==> Check your internet connection!")
       
