@@ -547,6 +547,9 @@ TempoA = system.time({for (i in 1:8) {func_metodos(1000,0.05,1)}})[3]
 #BLAS: /usr/lib/libblas.so.3.8.0
 #LAPACK: /usr/lib/liblapack.so.3.8.0
 
+# systemctl enable cpupower
+# cpupower frequency-info
+# cpupower frequency-set -g performance
 
 set.seed(12345) 
 cores <- detectCores(logical = FALSE)
