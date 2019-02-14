@@ -543,6 +543,11 @@ TempoA = system.time({for (i in 1:8) {func_metodos(1000,0.05,1)}})[3]
 
 # Forma 2 (Paralelo): 
 
+#Matrix products: default
+#BLAS: /usr/lib/libblas.so.3.8.0
+#LAPACK: /usr/lib/liblapack.so.3.8.0
+
+
 set.seed(12345) 
 cores <- detectCores(logical = FALSE)
 cl <- makeCluster(cores, type="FORK")
