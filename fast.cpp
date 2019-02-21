@@ -1,8 +1,8 @@
-# Author: Pedro Rafael D. Marinho
-# Institution: Federal University of Paraíba, Brazil
-# Department of Statistics
-# Email: pedro@de.ufpb.br
-
+/* Author: Pedro Rafael D. Marinho
+   Institution: Federal University of Paraíba, Brazil
+   Department of Statistics
+   Email: pedro@de.ufpb.br
+*/
 
 //   http://www.rcpp.org/
 //   http://adv-r.had.co.nz/Rcpp.html
@@ -49,9 +49,11 @@ double det_cpp(arma::mat& x){
 }
 
 // [[Rcpp::export]]
-NumericVector diag_cpp(arma::mat& x){
-   arma::vec result = arma::diagvec(x);
-   return NumericVector(result.begin(),result.end());
+arma::mat diag_cpp(arma::vec& x){
+   arma::mat result = arma::diagmat(x);
+  
+   return result;
+   
 }
 
 // [[Rcpp::export]]

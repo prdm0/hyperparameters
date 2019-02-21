@@ -8,12 +8,11 @@ library(MASS)
 library(iRegression)
 library(quantreg)
 library(robustbase)
-#library(foreach)
-#library(doSNOW)
 #library(parallel)
 #library(doMC)
 library(doParallel)
-#library(snow)
+
+#install.packages(c("mvtnorm", "sm", "iRegression", "quantreg", "robustreg", "doParallel"))
 
 ######################################## FUNCTIONS ###########################################
 
@@ -43,12 +42,12 @@ S1 = function(y1, y2, frac = 0.5){
   tmp = (y1[idx1] - y2[idx2])^2
   mean(quantile(tmp[tmp != 0], probs = c(.9, .1)))
 }
-S2 = function(y1, y2){
-  D = outer(y1, y2, '-')
-  D = D^2
-  D_no_zero = D[which(!D == 0)]
-  median(D_no_zero)
-}
+ S2 = function(y1, y2){
+   D = outer(y1, y2, '-')
+   D = D^2
+   D_no_zero = D[which(!D == 0)]
+   median(D_no_zero)
+ }
 S3 = function(y1, y2, n, p){
   sum((y1-y2)^2)/(n-p-1)
 }
@@ -243,8 +242,8 @@ func_metodos = function(amostra, percentual, scenario) {
         ################################## CENARIO #################################################
         
         #MATRIZ DE VARIANCIA E COVARIANCIA BIVARIADA
-        sc = diag(0.5,2,2) #CENTER
-        sr = diag(0.1,2,2) #RANGE
+        sc = diag(0.5, 2, 2) #CENTER
+        sr = diag(0.1, 2, 2) #RANGE
         
         #M?DIA DOS CENARIOS (Table 1 - LimaNetoDeCarvalho_2018)
         
@@ -538,8 +537,8 @@ func_metodos = function(amostra, percentual, scenario) {
 packpages = c('mvtnorm', 'sm', 'MASS', 'iRegression', 'quantreg', 'robustbase')        
           
 # Serial:
-set.seed(12345)
-TempoA = system.time({for (i in 1:8) {func_metodos(1000,0.05,1)}})[3]
+#set.seed(12345)
+#TempoA = system.time({for (i in 1:8) {func_metodos(1000,0.05,1)}})[3]
 
 # Forma 2 (Paralelo): 
 
@@ -551,15 +550,16 @@ TempoA = system.time({for (i in 1:8) {func_metodos(1000,0.05,1)}})[3]
 # cpupower frequency-info
 # cpupower frequency-set -g performance
 
-set.seed(12345) 
-cores <- detectCores(logical = FALSE)
-cl <- makeCluster(cores, type="FORK")
+#set.seed(12345) 
+#cores <- detectCores()
+#cl <- makeCluster(cores, type="FORK")
+#registerDoParallel(cl)
+#TempoB = system.time({foreach(i = 1:8, .packages=packpages) %dopar% {func_metodos(1000,0.05,1)}})[3]
 
-TempoB = system.time({foreach(i = 1:8, .packages=packpages) %dopar% {func_metodos(1000,0.05,1)}})[3]
-
-stopCluster(cl)
+#stopCluster(cl)
 
 # Forma 2 (Paralelo): 
 
 set.seed(12345)
-system.time(x <- parallel::mclapply(1:8, FUN = function(x) func_metodos(1000,0.05,1), mc.cores = 8))
+system.time(x <- parallel::mclapply(1:8, FUN = function(x) func_metodos(1000,0.05,1), 
+                                    mc.cores = 8))
