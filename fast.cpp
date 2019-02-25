@@ -39,7 +39,7 @@ double S2_cpp(NumericVector y1, NumericVector y2) {
   
   return Rcpp::median(no_zero);
   
-  //return median(y1);
+//return median(y1);
 }
 
 // [[Rcpp::export]]

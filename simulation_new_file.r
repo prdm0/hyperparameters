@@ -113,7 +113,7 @@ ETKRR = function(y, x, s, tol = 1e-10, maxit = 100, tolsolve = 1e-100) {
     if(det.txkx == 0 || abs(det.txkx) < tol) {invtxkx = ginv(txkx); invg = invg + 1} else {invtxkx = solve(txkx, tol = tolsolve)}
     
     
-    betahat = invtxkx%*%t(x)%*%diag(K)%*%y
+    betahat = invtxkx%*%t(x)%*%diag_cpp(K)%*%y
     yhat = x%*%betahat
     K = gauss.kern(y, yhat, hparameter)
     S = c(S, sum(2-2*K))
@@ -187,18 +187,18 @@ ETKRRP =  function(y1, x1, y2, x2, s, t = NULL, tol = 1e-10, maxit = 100, tolsol
   repeat {
     it = it+1
     
-    txkx1 = t(x1)%*%diag(K)%*%x1
+    txkx1 = t(x1)%*%diag_cpp(K)%*%x1
     det.txkx1 = det_cpp(txkx1)
     if(det.txkx1 == 0 || abs(det.txkx1) < tol) {invtxkx1 = ginv(txkx1); invg = invg + 1} else {invtxkx1 = solve(txkx1, tol = tolsolve)}
     
-    betahat1 = invtxkx1 %*% t(x1 )%*%diag(K)%*%y1
+    betahat1 = invtxkx1 %*% t(x1 )%*%diag_cpp(K)%*%y1
     yhat1 = x1%*%betahat1
     
-    txkx2 = t(x2)%*%diag(K)%*%x2
+    txkx2 = t(x2)%*%diag_cpp(K)%*%x2
     det.txkx2 = det_cpp(txkx2)
     if(det.txkx2 == 0 || abs(det.txkx2) < tol) {invtxkx2 = ginv(txkx2); invg = invg + 1} else {invtxkx2 = solve(txkx2, tol = tolsolve)}
     
-    betahat2 = invtxkx2%*%t(x2)%*%diag(K)%*%y2
+    betahat2 = invtxkx2%*%t(x2)%*%diag_cpp(K)%*%y2
     yhat2 = x2%*%betahat2
     
     K = gauss.kern(y1, yhat1, hp1) * gauss.kern(y2, yhat2, hp2) 
@@ -529,8 +529,8 @@ func_metodos = function(amostra, percentual, scenario) {
 packpages = c('mvtnorm', 'sm', 'MASS', 'iRegression', 'quantreg', 'robustbase')        
           
 # Serial:
-set.seed(12345)
-TempoA = system.time({for (i in 1:8) {func_metodos(1000,0.05,1)}})[3]
+#set.seed(12345)
+#TempoA = system.time({for (i in 1:8) {func_metodos(1000,0.05,1)}})[3]
 
 # Forma 2 (Paralelo): 
 
@@ -557,5 +557,5 @@ set.seed(12345)
 system.time(x <- parallel::mclapply(1:8, FUN = function(x) func_metodos(1000,0.05,1), 
                                     mc.cores = 4))
 
-set.seed(12345)
-TempoC = system.time(func_metodos(1000,0.05,1))
+#set.seed(12345)
+#TempoC = system.time(func_metodos(1000,0.05,1))
